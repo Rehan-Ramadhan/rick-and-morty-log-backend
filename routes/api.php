@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DimensionController;
+use App\Http\Controllers\CharLogController;
 
 // auth
 Route::post('/register', [AuthController::class, 'register']);
@@ -14,4 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // dimensions
     Route::apiResource('dimensions', DimensionController::class);
+
+    // char logs
+    Route::apiResource('char-logs', CharLogController::class);
 });
