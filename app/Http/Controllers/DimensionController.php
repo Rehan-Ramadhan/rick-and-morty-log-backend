@@ -2,47 +2,116 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dimension;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DimensionController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * menampilkan semua kategori milik user yang login.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $dimensions = $request->user()
+            ->dimensions()
+            ->withCount('charLogs')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar kategori berhasil diambil.',
+            'data' => $dimensions,
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * menambahkan kategori baru.
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('dimensions', 'name')
+                    ->where('user_id', $request->user()->id),
+            ],
+        ]);
+
+        $dimension = $request->user()
+            ->dimensions()
+            ->create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kategori berhasil ditambahkan.',
+            'data' => $dimension,
+        ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * menampilkan detail kategori.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        //
+        $dimension = $request->user()
+            ->dimensions()
+            ->with('charLogs')
+            ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Detail kategori berhasil diambil.',
+            'data' => $dimension,
+        ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * mengubah kategori.
      */
     public function update(Request $request, string $id)
     {
-        //
+        $dimension = $request->user()
+            ->dimensions()
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('dimensions', 'name')
+                    ->where('user_id', $request->user()->id)
+                    ->ignore($dimension->id),
+            ],
+        ]);
+
+        $dimension->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kategori berhasil diperbarui.',
+            'data' => $dimension,
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * menghapus kategori.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        //
+        $dimension = $request->user()
+            ->dimensions()
+            ->findOrFail($id);
+
+        $dimension->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kategori berhasil dihapus.',
+        ]);
     }
 }
